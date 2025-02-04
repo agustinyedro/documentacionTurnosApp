@@ -17,11 +17,20 @@ export default defineConfig({
 
     sidebar: [
       {
-        text: 'Examples',
+        text: 'Backend',
         items: [
-          { text: 'Markdown Examples', link: '/markdown-examples' },
+          { text: 'Inicio', link: '/inicioBack' },
           { text: 'Runtime API Examples', link: '/api-examples' }
-        ]
+        ],
+        collapsed: true,
+      },
+      {
+        text: 'Frontend',
+        items: [
+          { text: '', link: '/markdown-examples' },
+          { text: 'Runtime API Examples', link: '/api-examples' }
+        ],
+        collapsed: true
       }
     ],
 

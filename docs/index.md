@@ -15,9 +15,9 @@ hero:
       link: /api-examples
 
 features:
-  - title: Feature A
-    details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-    link: /api-examples
+  - title: BackEnd
+    details: Documentacion sobre el back de la app
+    link: /inicioBack
   - title: Feature B
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
   - title: Feature C
