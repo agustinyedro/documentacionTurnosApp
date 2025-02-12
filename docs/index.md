@@ -8,15 +8,15 @@ hero:
   tagline:
   actions:
     - theme: brand
-      text: Markdown Examples
-      link: /markdown-examples
+      text: Front
+      link: /front/Frontend
     - theme: alt
-      text: API Examples
+      text: Back
       link: /api-examples
 
 features:
   - title: BackEnd
-    details: Documentacion sobre el back de la app
+    details: Documentacion sobre el back-end de la app
     link: /inicioBack
   - title: Feature B
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
