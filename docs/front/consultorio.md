@@ -25,17 +25,17 @@ Una vez se crean los consultorios lo podrá ver aquí con lo datos del mismo
 
 ## Tratamientos
 
-El tratamiento se compone de:
+El `tratamiento` se compone de:
 
-- Nombre del tratamiento
-- Descripcion
-- Precio
-- Duracion
-- Color
+- `Nombre del tratamiento`
+- `Descripcion`
+- `Precio`
+- `Duracion`
+- `Color`
 
 ### Agregar Tratamientos
 
-Para agregar un Tratamiento, encontrara el botón de '+ Agregar Tratamiento', el cual desplegar un formulario para darle un nombre, descripción , el precio que de ingresarse solo números , la duración que en cantidad de minutos y un color para distinguirlo de otro tratamientos.
+Para agregar un Tratamiento, encontrara el botón de `+ Agregar Tratamiento`, el cual desplegar un formulario para darle un nombre, descripción , el precio que de ingresarse solo números , la duración que en cantidad de minutos y un color para distinguirlo de otro tratamientos.
 
 ### Listado de Tratamientos
 

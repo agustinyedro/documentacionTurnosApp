@@ -54,6 +54,13 @@ export default defineConfig({
       copyright:
         'Derechos de autor © 2025-presente <a href="https://github.com/agustinyedro">Agustin Yedro</a> & <a href="">Maximiliano Pedano</a>',
     },
+    editLink: {
+      pattern: 'https://github.com/agustinyedro/documentacionTurnosApp/edit/main/docs/:path',
+      text: 'Editar esta página en GitHub'
+    },
+    outline: {
+      label: 'En esta página'
+    },
     lastUpdated: {
       text: 'Actualizado en',
       formatOptions: {
