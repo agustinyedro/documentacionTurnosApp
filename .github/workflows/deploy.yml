@@ -26,11 +26,16 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: npm # Usa npm, pnpm o yarn según tu configuración
+          node-version: 18.17.1
+          cache: pnpm # Usa pnpm en lugar de npm
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9 # Asegúrate de usar la versión correcta de pnpm
 
       - name: Install dependencies
-        run: npm ci # Instala dependencias
+        run: pnpm install --frozen-lockfile # Instala dependencias con pnpm
 
       - name: Build with VitePress
         run: |
