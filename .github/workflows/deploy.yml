@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18.17.1 # Cambia a Node.js 18 para coincidir con tu entorno local
+          node-version: 18 # Usa Node.js 18
           cache: "pnpm" # Habilita el caché para pnpm
 
       - name: Install pnpm
