@@ -17,9 +17,10 @@ hero:
 features:
   - title: BackEnd
     details: Documentacion sobre el back-end de la app
-    link: /inicioBack
-  - title: Feature B
+    link: /back/inicioBack
+  - title: Tareas
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+    link: /tareas/tareasIndex
   - title: Equipo de trabajo
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
     link: /team.md

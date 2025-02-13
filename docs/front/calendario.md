@@ -22,8 +22,32 @@ Para crear un turno debe hacer click en **_+ Nuevo Turno_**, esto abrirá un for
 
 Una vez este creado, este aparecerá en la respectiva fecha y horario con el color del tratamiento que fue dado anteriormente.
 
+#### Editar turno
+
+Para editar el turno debe hacer click sobre el mismo y este abrira el formulario con los datos cargados anteriormente, una ves cambie lo que necesita da click en editar y estara realizado el cambio
+
+#### Eliminar turno
+
 ## Calendario
 
 En este componente se mostraran los turnos con el horario, con nombre y apellido, en el campo se puede hacer click y esto abrirá un formulario igual al de crear turno que te pemitina ver mas detalles o editarlo si lo necesitaras.
 
 ### Filtros
+
+El calendario se divide en cuatro filtros `Mes`,`Semana`, `Día`, `Lista`.
+
+#### Mes
+
+Este filtro mostrara el calendario con el mes completo y todos los turnos que haya por día.
+
+#### Semana
+
+Este filtro mostrara el calendario por semana y todos los turnos que haya por día.
+
+#### Día
+
+Este filtro mostrara el calendario con el dia completo y todos los turnos por hora por cada 1 hora.
+
+#### Lista
+
+Este filtro mostrara el calendario con el mes completo y todos los turnos que haya por día, agrupándolos por dia.
