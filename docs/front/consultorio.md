@@ -20,8 +20,8 @@ Un `consultorio` se compone de:
 Para agregar un consultorio, encontrara el botón de `+ Agregar consultorio`, el cual desplegar un formulario para darle un nombre y elegir lo tratamientos previamente cargaos, de los cuales podrá elegir según su necesidad
 
 <GifToggle
-  staticImage="./img/Recurso 1.png"
-  gifImage="./img/agregarconsul.gif"
+  staticImage="front/img/Recurso 1.png"
+  gifImage="front/img/agregarconsul.gif"
   width="800"
   height="auto"
 />

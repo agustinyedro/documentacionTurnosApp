@@ -11,7 +11,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 // Definir las propiedades del componente
 const props = defineProps({
@@ -33,14 +33,21 @@ const props = defineProps({
   },
 });
 
+// Obtener la base URL dinámicamente (para GitHub Pages)
+const baseUrl = import.meta.env.BASE_URL;
+
+// Convertir las rutas de las imágenes en rutas absolutas
+const staticImageUrl = computed(() => `${baseUrl}${props.staticImage}`);
+const gifImageUrl = computed(() => `${baseUrl}${props.gifImage}`);
+
 // Estado para manejar la imagen actual
-const currentImage = ref(props.staticImage);
+const currentImage = ref(staticImageUrl.value);
 
 // Función para alternar entre la imagen estática y el GIF
 const toggleGif = () => {
   currentImage.value =
-    currentImage.value === props.staticImage
-      ? props.gifImage
-      : props.staticImage;
+    currentImage.value === staticImageUrl.value
+      ? gifImageUrl.value
+      : staticImageUrl.value;
 };
 </script>
