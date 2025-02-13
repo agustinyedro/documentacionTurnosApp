@@ -8,7 +8,7 @@ La aplicacion se compone de varias pestañas de navegacion
 - [Home]()
 - [Calendario]()
 - [Pacientes]()
-- [Pestaña Consultorio](/docs/front/consultorio.md)
+- [Pestaña Consultorio](/front/consultorio)
 - [Notificaciones]()
 - [Conexión]()
 - [Cerrar Sesión]()

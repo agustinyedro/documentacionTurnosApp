@@ -20,6 +20,7 @@ features:
     link: /inicioBack
   - title: Feature B
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
-  - title: Feature C
+  - title: Equipo de trabajo
     details: Lorem ipsum dolor sit amet, consectetur adipiscing elit
+    link: /team.md
 ---

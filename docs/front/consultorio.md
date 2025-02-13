@@ -13,7 +13,7 @@ Un `consultorio` se compone de:
 
 ### Agregar Consultorio
 
-Para agregar un consultorio, encontrara el botón de **_+ Agregar consultorio_**, el cual desplegar un formulario para darle un nombre y elegir lo tratamientos previamente cargaos, de los cuales podrá elegir según su necesidad
+Para agregar un consultorio, encontrara el botón de `+ Agregar consultorio`, el cual desplegar un formulario para darle un nombre y elegir lo tratamientos previamente cargaos, de los cuales podrá elegir según su necesidad
 
 ### Listado de Consultorio
 
