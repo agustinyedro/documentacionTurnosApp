@@ -33,11 +33,8 @@ jobs:
         with:
           node-version: 18
           cache: pnpm # Habilitar caché para pnpm
-
-      - name: Habilitar corepack y preparar pnpm
-        run: |
-          corepack enable
-          corepack prepare pnpm@latest --activate
+      - name: Instalar pnpm manualmente
+        run: npm install -g pnpm
 
       - name: Verificar instalación de pnpm
         run: pnpm --version
@@ -48,7 +45,7 @@ jobs:
       - name: Construir con VitePress
         run: |
           pnpm run docs:build
-          touch docs/.vitepress/dist/.nojekyll # Evita problemas con archivos _ en GitHub Pages
+          touch docs/.vitepress/dist/.nojekyll
 
       - name: Subir artefactos
         uses: actions/upload-pages-artifact@v3
