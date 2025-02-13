@@ -34,7 +34,7 @@ jobs:
 
       - name: Build with VitePress
         run: |
-          npm run docs:build
+          pnpm run docs:build
           touch docs/.vitepress/dist/.nojekyll # Evita problemas con archivos _ en GitHub Pages
 
       - name: Upload artifact
