@@ -4,7 +4,7 @@ import { defineConfig,type DefaultTheme } from "vitepress";
 export default defineConfig({
   lang: "es-AR",
   title: "TurnosApp",
-  
+  ignoreDeadLinks: true,
   description: "Aqui encontraras toda la documentacion sobre la app",
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
@@ -67,7 +67,8 @@ function sidebarFront(): DefaultTheme.SidebarItem[] {
     {
       text: "Frontend",
       items: [
-        { text: "Inicio", link: "inicioFront" }, // Correcto, apunta a front/index.md
+        { text: "Inicio", link: "/" },
+        { text: "Inicio Frontend", link: "inicioFront" }, // Correcto, apunta a front/index.md
         { text: "Calendario", link: "calendario" }, // Se agrega el prefijo correcto
         { text: "Consultorio", link: "consultorio" }, // Se agrega el prefijo correcto
       ],
