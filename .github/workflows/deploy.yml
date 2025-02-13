@@ -29,10 +29,16 @@ jobs:
           node-version: 18.17.1
           cache: pnpm # Usa pnpm en lugar de npm
 
+      - name: Enable Corepack (pnpm)
+        run: corepack enable
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 9 # Asegúrate de usar la versión correcta de pnpm
+
+      - name: Check pnpm version
+        run: pnpm --version # Verifica que pnpm esté instalado
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile # Instala dependencias con pnpm
