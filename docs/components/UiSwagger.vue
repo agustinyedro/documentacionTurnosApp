@@ -3,7 +3,7 @@
 </template>
 
 <script>
-import SwaggerUI from "swagger-ui-dist/swagger-ui-bundle.js";
+import SwaggerUI from "swagger-ui-dist";
 import "swagger-ui-dist/swagger-ui.css";
 
 export default {
