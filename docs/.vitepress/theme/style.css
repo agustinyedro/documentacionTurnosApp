@@ -139,3 +139,112 @@
 .small-link {
   font-size: 0.8em;
 }
+
+.swagger-ui .info {
+  margin: 10px 0 0 !important;
+}
+
+.swagger-ui .scheme-container {
+  background: var(--vp-c-bg) !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .15);
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.swagger-ui .opblock .opblock-section-header {
+  align-items: center;
+  background: var(--vp-c-bg) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .1);
+  display: flex;
+  min-height: 50px;
+  padding: 8px 20px;
+}
+
+
+/* Cambia el color de la barra superior de Swagger UI */
+.swagger-ui .topbar {
+  background-color: var(--vp-c-brand-1) !important;
+  /* Usa el color primario */
+  color: var(--vp-c-white) !important;
+  /* Texto blanco */
+}
+
+.swagger-ui .scheme-container .schemes {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.swagger-ui .servers-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--vp-c-text-1) !important;
+}
+
+.swagger-ui .servers>label select {
+  max-width: 100%;
+  min-width: 130px;
+  width: 100%;
+  background: var(--vp-c-bg) !important;
+  color: var(--vp-c-text-1) !important;
+}
+
+/* Cambia el fondo de las secciones de endpoints */
+.swagger-ui .opblock-tag {
+  background-color: var(--vp-c-bg-alt) !important;
+  /* Fondo claro */
+  border-color: var(--vp-c-text-3) !important;
+  /* Borde suave */
+}
+
+.swagger-ui select {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-size: 20px;
+  border: 2px solid var(--vp-c-text-1);
+  border-radius: 4px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .25);
+  color: var(--vp-c-text-1);
+  font-family: sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 5px 40px 5px 10px;
+}
+
+/* Cambia el color de los botones "Try it out" */
+.swagger-ui .btn {
+  background-color: var(--vp-c-brand-1) !important;
+  /* Usa el color primario */
+  color: var(--vp-c-white) !important;
+  /* Texto blanco */
+}
+
+/* Cambia el color de los títulos */
+.swagger-ui h2,
+.swagger-ui h3,
+.swagger-ui h4 {
+  color: var(--vp-c-text-1) !important;
+  /* Texto oscuro */
+}
+
+/* Cambia el color de los enlaces */
+.swagger-ui a {
+  color: var(--vp-c-brand-1) !important;
+  /* Usa el color primario */
+}
+
+/* Cambia el fondo general de Swagger UI */
+.swagger-ui {
+  background-color: var(--vp-c-bg) !important;
+  /* Fondo principal */
+}
+
+/* Cambia la fuente de Swagger UI */
+.swagger-ui {
+  font-family: 'Roboto', sans-serif !important;
+  /* Usa una fuente específica */
+}

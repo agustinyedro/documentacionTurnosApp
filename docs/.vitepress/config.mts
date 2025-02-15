@@ -20,6 +20,7 @@ export default defineConfig({
       '/front/': { base: '/front/', items: sidebarFront() },  
       '/back/': { base: '/back/', items: sidebarBack() },
       '/tareas/': { base: '/tareas/', items: sidebarTareas() },
+      '/apis/': { base: '/apis/', items: sidebarApi() },
     },
 
     docFooter: {
@@ -60,6 +61,7 @@ function nav(): DefaultTheme.NavItem[] {
     { text: "Inicio", link: "/" },
     { text: "Frontend", link: "/front/inicioFront", activeMatch: "/front/" },
     { text: "Backend", link: "/back/inicioBack", activeMatch: "/back/" },
+    { text:"API", link: "/apis/inicio", activeMatch: "/apis/" },
     { text: "Tareas", link: "/tareas/tareasIndex", activeMatch: "/tareas/" },
   ]
 }
@@ -74,6 +76,7 @@ function sidebarFront(): DefaultTheme.SidebarItem[] {
         { text: "Calendario", link: "calendario" }, // Se agrega el prefijo correcto
         { text: "Consultorio", link: "consultorio" }, // Se agrega el prefijo correcto
       ],
+      collapsed: false
     },
   ];
 }
@@ -84,7 +87,8 @@ function sidebarBack(): DefaultTheme.SidebarItem[] {
       text: "Backend",
       items: [
         { text: "Inicio", link: "inicioBack" },
-        {text:"Rutas", link:"rutas"},
+        { text: "Rutas", link: "rutas" },
+        { text: "Auth", link: "auth" },
       ],
     },
   ]
@@ -97,6 +101,23 @@ function sidebarTareas(): DefaultTheme.SidebarItem[] {
         { text: "Tarea 1", link: "/tarea1" },
         { text: "Tarea 2", link: "/tarea2" },
         { text: "Tarea 3", link: "/tarea3" },
+      ],
+    },
+  ]
+}
+
+function sidebarApi(): DefaultTheme.SidebarItem[] { 
+  return [
+    {
+      text: "API",
+      items: [
+        { text: "Inicio", link: "inicio" },
+        { text: "Auth", link: "auth" },
+        { text: "Tratamientos", link: "tratamientos" },
+        { text: "Pacientes", link: "pacientes" },
+        { text: "Turnos", link: "turnos" },
+        { text: "Consultorios", link: "consultorios" },
+        { text:"Whatsapp", link: "whatsapp" },
       ],
     },
   ]
