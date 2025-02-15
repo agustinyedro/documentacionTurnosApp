@@ -3,11 +3,13 @@ import { defineConfig,type DefaultTheme } from "vitepress";
 
 // https://vitepress.dev/reference/site-config
 export default defineConfig({
+
   base: "/documentacionTurnosApp/",
   lang: "es-AR",
   title: "TurnosApp",
   ignoreDeadLinks: true,
   description: "Aqui encontraras toda la documentacion sobre la app",
+
   
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config

@@ -37,7 +37,7 @@ import {
   watchEffect
 } from "./chunk-JN5NFW2R.js";
 
-// node_modules/.pnpm/@vueuse+shared@12.4.0/node_modules/@vueuse/shared/index.mjs
+// node_modules/.pnpm/@vueuse+shared@12.7.0/node_modules/@vueuse/shared/index.mjs
 function computedEager(fn, options) {
   var _a;
   const result = shallowRef();
@@ -53,7 +53,7 @@ function computedWithControl(source, fn) {
   let v = void 0;
   let track;
   let trigger;
-  const dirty = ref(true);
+  const dirty = shallowRef(true);
   const update = () => {
     dirty.value = true;
     trigger();
@@ -344,6 +344,7 @@ function debounceFilter(ms, options = {}) {
     lastRejector();
     lastRejector = noop;
   };
+  let lastInvoker;
   const filter = (invoke2) => {
     const duration = toValue(ms);
     const maxDuration = toValue(options.maxWait);
@@ -358,12 +359,13 @@ function debounceFilter(ms, options = {}) {
     }
     return new Promise((resolve, reject) => {
       lastRejector = options.rejectOnCancel ? reject : resolve;
+      lastInvoker = invoke2;
       if (maxDuration && !maxTimer) {
         maxTimer = setTimeout(() => {
           if (timer)
             _clearTimeout(timer);
           maxTimer = null;
-          resolve(invoke2());
+          resolve(lastInvoker());
         }, maxDuration);
       }
       timer = setTimeout(() => {
@@ -430,8 +432,11 @@ function throttleFilter(...args) {
   };
   return filter;
 }
-function pausableFilter(extendFilter = bypassFilter) {
-  const isActive = ref(true);
+function pausableFilter(extendFilter = bypassFilter, options = {}) {
+  const {
+    initialState = "active"
+  } = options;
+  const isActive = toRef2(initialState === "active");
   function pause() {
     isActive.value = false;
   }
@@ -682,9 +687,10 @@ function watchWithFilter(source, cb, options = {}) {
 function watchPausable(source, cb, options = {}) {
   const {
     eventFilter: filter,
+    initialState = "active",
     ...watchOptions
   } = options;
-  const { eventFilter, pause, resume, isActive } = pausableFilter(filter);
+  const { eventFilter, pause, resume, isActive } = pausableFilter(filter, { initialState });
   const stop = watchWithFilter(
     source,
     cb,
@@ -1055,7 +1061,7 @@ function useCounter(initialValue = 0, options = {}) {
   return { count, inc, dec, get: get2, set: set2, reset };
 }
 var REGEX_PARSE = /^(\d{4})[-/]?(\d{1,2})?[-/]?(\d{0,2})[T\s]*(\d{1,2})?:?(\d{1,2})?:?(\d{1,2})?[.:]?(\d+)?$/i;
-var REGEX_FORMAT = /[YMDHhms]o|\[([^\]]+)\]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a{1,2}|A{1,2}|m{1,2}|s{1,2}|Z{1,2}|SSS/g;
+var REGEX_FORMAT = /[YMDHhms]o|\[([^\]]+)\]|Y{1,4}|M{1,4}|D{1,2}|d{1,4}|H{1,2}|h{1,2}|a{1,2}|A{1,2}|m{1,2}|s{1,2}|Z{1,2}|z{1,4}|SSS/g;
 function defaultMeridiem(hours, minutes, isLowercase, hasPeriod) {
   let m = hours < 12 ? "AM" : "PM";
   if (hasPeriod)
@@ -1078,6 +1084,10 @@ function formatDate(date, formatStr, options = {}) {
   const milliseconds = date.getMilliseconds();
   const day = date.getDay();
   const meridiem = (_a = options.customMeridiem) != null ? _a : defaultMeridiem;
+  const stripTimeZone = (dateString) => {
+    var _a2;
+    return (_a2 = dateString.split(" ")[1]) != null ? _a2 : "";
+  };
   const matches = {
     Yo: () => formatOrdinal(years),
     YY: () => String(years).slice(-2),
@@ -1110,7 +1120,11 @@ function formatDate(date, formatStr, options = {}) {
     A: () => meridiem(hours, minutes),
     AA: () => meridiem(hours, minutes, false, true),
     a: () => meridiem(hours, minutes, true),
-    aa: () => meridiem(hours, minutes, true, true)
+    aa: () => meridiem(hours, minutes, true, true),
+    z: () => stripTimeZone(date.toLocaleDateString(toValue(options.locales), { timeZoneName: "shortOffset" })),
+    zz: () => stripTimeZone(date.toLocaleDateString(toValue(options.locales), { timeZoneName: "shortOffset" })),
+    zzz: () => stripTimeZone(date.toLocaleDateString(toValue(options.locales), { timeZoneName: "shortOffset" })),
+    zzzz: () => stripTimeZone(date.toLocaleDateString(toValue(options.locales), { timeZoneName: "longOffset" }))
   };
   return formatStr.replace(REGEX_FORMAT, (match, $1) => {
     var _a2, _b;
@@ -1143,7 +1157,7 @@ function useIntervalFn(cb, interval = 1e3, options = {}) {
     immediateCallback = false
   } = options;
   let timer = null;
-  const isActive = ref(false);
+  const isActive = shallowRef(false);
   function clean() {
     if (timer) {
       clearInterval(timer);
@@ -1187,7 +1201,7 @@ function useInterval(interval = 1e3, options = {}) {
     immediate = true,
     callback
   } = options;
-  const counter = ref(0);
+  const counter = shallowRef(0);
   const update = () => counter.value += 1;
   const reset = () => {
     counter.value = 0;
@@ -1222,9 +1236,10 @@ function useLastChanged(source, options = {}) {
 }
 function useTimeoutFn(cb, interval, options = {}) {
   const {
-    immediate = true
+    immediate = true,
+    immediateCallback = false
   } = options;
-  const isPending = ref(false);
+  const isPending = shallowRef(false);
   let timer = null;
   function clear() {
     if (timer) {
@@ -1237,6 +1252,8 @@ function useTimeoutFn(cb, interval, options = {}) {
     clear();
   }
   function start(...args) {
+    if (immediateCallback)
+      cb();
     clear();
     isPending.value = true;
     timer = setTimeout(() => {
@@ -1346,7 +1363,7 @@ function watchAtMost(source, cb, options) {
     count,
     ...watchOptions
   } = options;
-  const current = ref(0);
+  const current = shallowRef(0);
   const stop = watchWithFilter(
     source,
     (...args) => {
@@ -1397,7 +1414,7 @@ function watchIgnorable(source, cb, options = {}) {
   let ignorePrevAsyncUpdates;
   let stop;
   if (watchOptions.flush === "sync") {
-    const ignore = ref(false);
+    const ignore = shallowRef(false);
     ignorePrevAsyncUpdates = () => {
     };
     ignoreUpdates = (updater) => {
@@ -1415,8 +1432,8 @@ function watchIgnorable(source, cb, options = {}) {
     );
   } else {
     const disposables = [];
-    const ignoreCounter = ref(0);
-    const syncCounter = ref(0);
+    const ignoreCounter = shallowRef(0);
+    const syncCounter = shallowRef(0);
     ignorePrevAsyncUpdates = () => {
       ignoreCounter.value = syncCounter.value;
     };
@@ -1545,7 +1562,7 @@ function whenever(source, cb, options) {
   return stop;
 }
 
-// node_modules/.pnpm/@vueuse+core@12.4.0/node_modules/@vueuse/core/index.mjs
+// node_modules/.pnpm/@vueuse+core@12.7.0/node_modules/@vueuse/core/index.mjs
 function computedAsync(evaluationCallback, initialState, optionsOrRef) {
   let options;
   if (isRef(optionsOrRef)) {
@@ -1561,7 +1578,7 @@ function computedAsync(evaluationCallback, initialState, optionsOrRef) {
     shallow = true,
     onError = noop
   } = options;
-  const started = ref(!lazy);
+  const started = shallowRef(!lazy);
   const current = shallow ? shallowRef(initialState) : ref(initialState);
   let counter = 0;
   watchEffect(async (onInvalidate) => {
@@ -1632,12 +1649,16 @@ function createReusableTemplate(options = {}) {
   });
   const reuse = defineComponent({
     inheritAttrs,
-    setup(_, { attrs, slots }) {
+    props: options.props,
+    setup(props, { attrs, slots }) {
       return () => {
         var _a;
         if (!render.value && true)
           throw new Error("[VueUse] Failed to find the definition of reusable template");
-        const vnode = (_a = render.value) == null ? void 0 : _a.call(render, { ...keysToCamelKebabCase(attrs), $slots: slots });
+        const vnode = (_a = render.value) == null ? void 0 : _a.call(render, {
+          ...options.props == null ? keysToCamelKebabCase(attrs) : props,
+          $slots: slots
+        });
         return inheritAttrs && (vnode == null ? void 0 : vnode.length) === 1 ? vnode[0] : vnode;
       };
     }
@@ -1715,60 +1736,63 @@ function unrefElement(elRef) {
   return (_a = plain == null ? void 0 : plain.$el) != null ? _a : plain;
 }
 function useEventListener(...args) {
-  let target;
-  let events2;
-  let listeners;
-  let options;
-  if (typeof args[0] === "string" || Array.isArray(args[0])) {
-    [events2, listeners, options] = args;
-    target = defaultWindow;
-  } else {
-    [target, events2, listeners, options] = args;
-  }
-  if (!target)
-    return noop;
-  events2 = toArray(events2);
-  listeners = toArray(listeners);
   const cleanups = [];
   const cleanup = () => {
     cleanups.forEach((fn) => fn());
     cleanups.length = 0;
   };
-  const register = (el, event, listener, options2) => {
-    el.addEventListener(event, listener, options2);
-    return () => el.removeEventListener(event, listener, options2);
+  const register = (el, event, listener, options) => {
+    el.addEventListener(event, listener, options);
+    return () => el.removeEventListener(event, listener, options);
   };
-  const stopWatch = watch(
-    () => [unrefElement(target), toValue(options)],
-    ([el, options2]) => {
+  const firstParamTargets = computed(() => {
+    const test = toArray(toValue(args[0])).filter((e) => e != null);
+    return test.every((e) => typeof e !== "string") ? test : void 0;
+  });
+  const stopWatch = watchImmediate(
+    () => {
+      var _a, _b;
+      return [
+        (_b = (_a = firstParamTargets.value) == null ? void 0 : _a.map((e) => unrefElement(e))) != null ? _b : [defaultWindow].filter((e) => e != null),
+        toArray(toValue(firstParamTargets.value ? args[1] : args[0])),
+        toArray(unref(firstParamTargets.value ? args[2] : args[1])),
+        // @ts-expect-error - TypeScript gets the correct types, but somehow still complains
+        toValue(firstParamTargets.value ? args[3] : args[2])
+      ];
+    },
+    ([raw_targets, raw_events, raw_listeners, raw_options]) => {
       cleanup();
-      if (!el)
+      if (!(raw_targets == null ? void 0 : raw_targets.length) || !(raw_events == null ? void 0 : raw_events.length) || !(raw_listeners == null ? void 0 : raw_listeners.length))
         return;
-      const optionsClone = isObject(options2) ? { ...options2 } : options2;
+      const optionsClone = isObject(raw_options) ? { ...raw_options } : raw_options;
       cleanups.push(
-        ...events2.flatMap((event) => {
-          return listeners.map((listener) => register(el, event, listener, optionsClone));
-        })
+        ...raw_targets.flatMap(
+          (el) => raw_events.flatMap(
+            (event) => raw_listeners.map((listener) => register(el, event, listener, optionsClone))
+          )
+        )
       );
     },
-    { immediate: true, flush: "post" }
+    { flush: "post" }
   );
   const stop = () => {
     stopWatch();
     cleanup();
   };
-  tryOnScopeDispose(stop);
+  tryOnScopeDispose(cleanup);
   return stop;
 }
 var _iOSWorkaround = false;
 function onClickOutside(target, handler, options = {}) {
-  const { window: window2 = defaultWindow, ignore = [], capture = true, detectIframe = false } = options;
-  if (!window2)
-    return noop;
+  const { window: window2 = defaultWindow, ignore = [], capture = true, detectIframe = false, controls = false } = options;
+  if (!window2) {
+    return controls ? { stop: noop, cancel: noop, trigger: noop } : noop;
+  }
   if (isIOS && !_iOSWorkaround) {
     _iOSWorkaround = true;
-    Array.from(window2.document.body.children).forEach((el) => el.addEventListener("click", noop));
-    window2.document.documentElement.addEventListener("click", noop);
+    const listenerOptions = { passive: true };
+    Array.from(window2.document.body.children).forEach((el) => useEventListener(el, "click", noop, listenerOptions));
+    useEventListener(window2.document.documentElement, "click", noop, listenerOptions);
   }
   let shouldListen = true;
   const shouldIgnore = (event) => {
@@ -1800,7 +1824,7 @@ function onClickOutside(target, handler, options = {}) {
       return;
     if (!el || el === event.target || event.composedPath().includes(el))
       return;
-    if (event.detail === 0)
+    if ("detail" in event && event.detail === 0)
       shouldListen = !shouldIgnore(event);
     if (!shouldListen) {
       shouldListen = true;
@@ -1834,10 +1858,23 @@ function onClickOutside(target, handler, options = {}) {
     }, { passive: true })
   ].filter(Boolean);
   const stop = () => cleanup.forEach((fn) => fn());
+  if (controls) {
+    return {
+      stop,
+      cancel: () => {
+        shouldListen = false;
+      },
+      trigger: (event) => {
+        shouldListen = true;
+        listener(event);
+        shouldListen = false;
+      }
+    };
+  }
   return stop;
 }
 function useMounted() {
-  const isMounted = ref(false);
+  const isMounted = shallowRef(false);
   const instance = getCurrentInstance();
   if (instance) {
     onMounted(() => {
@@ -2184,9 +2221,10 @@ function useRafFn(fn, options = {}) {
   const {
     immediate = true,
     fpsLimit = void 0,
-    window: window2 = defaultWindow
+    window: window2 = defaultWindow,
+    once = false
   } = options;
-  const isActive = ref(false);
+  const isActive = shallowRef(false);
   const intervalLimit = computed(() => {
     return fpsLimit ? 1e3 / toValue(fpsLimit) : null;
   });
@@ -2204,6 +2242,11 @@ function useRafFn(fn, options = {}) {
     }
     previousFrameTimestamp = timestamp2;
     fn({ delta, timestamp: timestamp2 });
+    if (once) {
+      isActive.value = false;
+      rafId = null;
+      return;
+    }
     rafId = window2.requestAnimationFrame(loop);
   }
   function resume() {
@@ -2359,8 +2402,11 @@ function useAnimate(target, keyframes, options) {
     }
   };
   watch(() => unrefElement(target), (el) => {
-    if (el)
+    if (el) {
       update();
+    } else {
+      animate.value = void 0;
+    }
   });
   watch(() => keyframes, (value) => {
     if (animate.value)
@@ -2391,12 +2437,13 @@ function useAnimate(target, keyframes, options) {
       syncResume();
     onReady == null ? void 0 : onReady(animate.value);
   }
-  useEventListener(animate, ["cancel", "finish", "remove"], syncPause);
+  const listenerOptions = { passive: true };
+  useEventListener(animate, ["cancel", "finish", "remove"], syncPause, listenerOptions);
   useEventListener(animate, "finish", () => {
     var _a;
     if (commitStyles)
       (_a = animate.value) == null ? void 0 : _a.commitStyles();
-  });
+  }, listenerOptions);
   const { resume: resumeRef, pause: pauseRef } = useRafFn(() => {
     if (!animate.value)
       return;
@@ -2450,7 +2497,7 @@ function useAsyncQueue(tasks, options) {
   };
   const initialResult = Array.from(Array.from({ length: tasks.length }), () => ({ state: promiseState.pending, data: null }));
   const result = reactive(initialResult);
-  const activeIndex = ref(-1);
+  const activeIndex = shallowRef(-1);
   if (!tasks || tasks.length === 0) {
     onFinished();
     return {
@@ -2518,8 +2565,8 @@ function useAsyncState(promise, initialState, options) {
     throwError
   } = options != null ? options : {};
   const state = shallow ? shallowRef(initialState) : ref(initialState);
-  const isReady = ref(false);
-  const isLoading = ref(false);
+  const isReady = shallowRef(false);
+  const isLoading = shallowRef(false);
   const error = shallowRef(void 0);
   async function execute(delay2 = 0, ...args) {
     if (resetOnExecute)
@@ -2587,8 +2634,8 @@ function getDefaultSerialization(target) {
     return defaults.object;
 }
 function useBase64(target, options) {
-  const base64 = ref("");
-  const promise = ref();
+  const base64 = shallowRef("");
+  const promise = shallowRef();
   function execute() {
     if (!isClient)
       return;
@@ -2668,10 +2715,10 @@ function useBattery(options = {}) {
   const { navigator: navigator2 = defaultNavigator } = options;
   const events2 = ["chargingchange", "chargingtimechange", "dischargingtimechange", "levelchange"];
   const isSupported = useSupported(() => navigator2 && "getBattery" in navigator2 && typeof navigator2.getBattery === "function");
-  const charging = ref(false);
-  const chargingTime = ref(0);
-  const dischargingTime = ref(0);
-  const level = ref(1);
+  const charging = shallowRef(false);
+  const chargingTime = shallowRef(0);
+  const dischargingTime = shallowRef(0);
+  const level = shallowRef(1);
   let battery;
   function updateBatteryInfo() {
     charging.value = this.charging;
@@ -2735,7 +2782,7 @@ function useBluetooth(options) {
   async function connectToBluetoothGATTServer() {
     error.value = null;
     if (device.value && device.value.gatt) {
-      device.value.addEventListener("gattserverdisconnected", reset);
+      useEventListener(device, "gattserverdisconnected", reset, { passive: true });
       try {
         server.value = await device.value.gatt.connect();
         isConnected.value = server.value.connected;
@@ -2782,20 +2829,12 @@ function useMediaQuery(query, options = {}) {
   const { window: window2 = defaultWindow, ssrWidth = useSSRWidth() } = options;
   const isSupported = useSupported(() => window2 && "matchMedia" in window2 && typeof window2.matchMedia === "function");
   const ssrSupport = ref(typeof ssrWidth === "number");
-  let mediaQuery;
-  const matches = ref(false);
+  const mediaQuery = shallowRef();
+  const matches = shallowRef(false);
   const handler = (event) => {
     matches.value = event.matches;
   };
-  const cleanup = () => {
-    if (!mediaQuery)
-      return;
-    if ("removeEventListener" in mediaQuery)
-      mediaQuery.removeEventListener("change", handler);
-    else
-      mediaQuery.removeListener(handler);
-  };
-  const stopWatch = watchEffect(() => {
+  watchEffect(() => {
     if (ssrSupport.value) {
       ssrSupport.value = !isSupported.value;
       const queryStrings = toValue(query).split(",");
@@ -2816,19 +2855,10 @@ function useMediaQuery(query, options = {}) {
     }
     if (!isSupported.value)
       return;
-    cleanup();
-    mediaQuery = window2.matchMedia(toValue(query));
-    if ("addEventListener" in mediaQuery)
-      mediaQuery.addEventListener("change", handler);
-    else
-      mediaQuery.addListener(handler);
-    matches.value = mediaQuery.matches;
+    mediaQuery.value = window2.matchMedia(toValue(query));
+    matches.value = mediaQuery.value.matches;
   });
-  tryOnScopeDispose(() => {
-    stopWatch();
-    cleanup();
-    mediaQuery = void 0;
-  });
+  useEventListener(mediaQuery, "change", handler, { passive: true });
   return computed(() => matches.value);
 }
 var breakpointsTailwind = {
@@ -2922,7 +2952,7 @@ function useBreakpoints(breakpoints, options = {}) {
   }
   const { window: window2 = defaultWindow, strategy = "min-width", ssrWidth = useSSRWidth() } = options;
   const ssrSupport = typeof ssrWidth === "number";
-  const mounted = ssrSupport ? ref(false) : { value: true };
+  const mounted = ssrSupport ? shallowRef(false) : { value: true };
   if (ssrSupport) {
     tryOnMounted(() => mounted.value = !!window2);
   }
@@ -2992,7 +3022,7 @@ function useBroadcastChannel(options) {
     window: window2 = defaultWindow
   } = options;
   const isSupported = useSupported(() => window2 && "BroadcastChannel" in window2);
-  const isClosed = ref(false);
+  const isClosed = shallowRef(false);
   const channel = ref();
   const data = ref();
   const error = shallowRef(null);
@@ -3009,15 +3039,18 @@ function useBroadcastChannel(options) {
     tryOnMounted(() => {
       error.value = null;
       channel.value = new BroadcastChannel(name);
-      channel.value.addEventListener("message", (e) => {
+      const listenerOptions = {
+        passive: true
+      };
+      useEventListener(channel, "message", (e) => {
         data.value = e.data;
-      }, { passive: true });
-      channel.value.addEventListener("messageerror", (e) => {
+      }, listenerOptions);
+      useEventListener(channel, "messageerror", (e) => {
         error.value = e;
-      }, { passive: true });
-      channel.value.addEventListener("close", () => {
+      }, listenerOptions);
+      useEventListener(channel, "close", () => {
         isClosed.value = true;
-      });
+      }, listenerOptions);
     });
   }
   tryOnScopeDispose(() => {
@@ -3071,8 +3104,9 @@ function useBrowserLocation(options = {}) {
   };
   const state = ref(buildState("load"));
   if (window2) {
-    useEventListener(window2, "popstate", () => state.value = buildState("popstate"), { passive: true });
-    useEventListener(window2, "hashchange", () => state.value = buildState("hashchange"), { passive: true });
+    const listenerOptions = { passive: true };
+    useEventListener(window2, "popstate", () => state.value = buildState("popstate"), listenerOptions);
+    useEventListener(window2, "hashchange", () => state.value = buildState("hashchange"), listenerOptions);
   }
   return state;
 }
@@ -3136,15 +3170,21 @@ function useClipboard(options = {}) {
   const permissionRead = usePermission("clipboard-read");
   const permissionWrite = usePermission("clipboard-write");
   const isSupported = computed(() => isClipboardApiSupported.value || legacy);
-  const text = ref("");
-  const copied = ref(false);
+  const text = shallowRef("");
+  const copied = shallowRef(false);
   const timeout = useTimeoutFn(() => copied.value = false, copiedDuring, { immediate: false });
   function updateText() {
-    if (isClipboardApiSupported.value && isAllowed(permissionRead.value)) {
-      navigator2.clipboard.readText().then((value) => {
-        text.value = value;
-      });
-    } else {
+    let useLegacy = !(isClipboardApiSupported.value && isAllowed(permissionRead.value));
+    if (!useLegacy) {
+      try {
+        navigator2.clipboard.readText().then((value) => {
+          text.value = value;
+        });
+      } catch (e) {
+        useLegacy = true;
+      }
+    }
+    if (useLegacy) {
       text.value = legacyRead();
     }
   }
@@ -3152,9 +3192,15 @@ function useClipboard(options = {}) {
     useEventListener(["copy", "cut"], updateText, { passive: true });
   async function copy(value = toValue(source)) {
     if (isSupported.value && value != null) {
-      if (isClipboardApiSupported.value && isAllowed(permissionWrite.value))
-        await navigator2.clipboard.writeText(value);
-      else
+      let useLegacy = !(isClipboardApiSupported.value && isAllowed(permissionWrite.value));
+      if (!useLegacy) {
+        try {
+          await navigator2.clipboard.writeText(value);
+        } catch (e) {
+          useLegacy = true;
+        }
+      }
+      if (useLegacy)
         legacyCopy(value);
       text.value = value;
       copied.value = true;
@@ -3194,7 +3240,7 @@ function useClipboardItems(options = {}) {
   } = options;
   const isSupported = useSupported(() => navigator2 && "clipboard" in navigator2);
   const content = ref([]);
-  const copied = ref(false);
+  const copied = shallowRef(false);
   const timeout = useTimeoutFn(() => copied.value = false, copiedDuring, { immediate: false });
   function updateContent() {
     if (isSupported.value) {
@@ -3531,7 +3577,7 @@ function useColorMode(options = {}) {
   });
   return Object.assign(auto, { store, system, state });
 }
-function useConfirmDialog(revealed = ref(false)) {
+function useConfirmDialog(revealed = shallowRef(false)) {
   const confirmHook = createEventHook();
   const cancelHook = createEventHook();
   const revealHook = createEventHook();
@@ -3563,9 +3609,51 @@ function useConfirmDialog(revealed = ref(false)) {
     onCancel: cancelHook.on
   };
 }
+function useCountdown(initialCountdown, options) {
+  var _a, _b;
+  const remaining = shallowRef(toValue(initialCountdown));
+  const intervalController = useIntervalFn(() => {
+    var _a2, _b2;
+    const value = remaining.value - 1;
+    remaining.value = value < 0 ? 0 : value;
+    (_a2 = options == null ? void 0 : options.onTick) == null ? void 0 : _a2.call(options);
+    if (remaining.value <= 0) {
+      intervalController.pause();
+      (_b2 = options == null ? void 0 : options.onComplete) == null ? void 0 : _b2.call(options);
+    }
+  }, (_a = options == null ? void 0 : options.interval) != null ? _a : 1e3, { immediate: (_b = options == null ? void 0 : options.immediate) != null ? _b : false });
+  const reset = (countdown) => {
+    var _a2;
+    remaining.value = (_a2 = toValue(countdown)) != null ? _a2 : toValue(initialCountdown);
+  };
+  const stop = () => {
+    intervalController.pause();
+    reset();
+  };
+  const resume = () => {
+    if (!intervalController.isActive.value) {
+      if (remaining.value > 0) {
+        intervalController.resume();
+      }
+    }
+  };
+  const start = (countdown) => {
+    reset(countdown);
+    intervalController.resume();
+  };
+  return {
+    remaining,
+    reset,
+    stop,
+    start,
+    pause: intervalController.pause,
+    resume,
+    isActive: intervalController.isActive
+  };
+}
 function useCssVar(prop, target, options = {}) {
   const { window: window2 = defaultWindow, initialValue, observe = false } = options;
-  const variable = ref(initialValue);
+  const variable = shallowRef(initialValue);
   const elRef = computed(() => {
     var _a;
     return unrefElement(target) || ((_a = window2 == null ? void 0 : window2.document) == null ? void 0 : _a.documentElement);
@@ -3576,7 +3664,7 @@ function useCssVar(prop, target, options = {}) {
     const el = toValue(elRef);
     if (el && window2 && key) {
       const value = (_a = window2.getComputedStyle(el).getPropertyValue(key)) == null ? void 0 : _a.trim();
-      variable.value = value || initialValue;
+      variable.value = value || variable.value || initialValue;
     }
   }
   if (observe) {
@@ -3591,21 +3679,20 @@ function useCssVar(prop, target, options = {}) {
       if (old[0] && old[1])
         old[0].style.removeProperty(old[1]);
       updateCssVar();
-    },
-    { immediate: true }
+    }
   );
   watch(
-    variable,
-    (val) => {
-      var _a;
+    [variable, elRef],
+    ([val, el]) => {
       const raw_prop = toValue(prop);
-      if (((_a = elRef.value) == null ? void 0 : _a.style) && raw_prop) {
+      if ((el == null ? void 0 : el.style) && raw_prop) {
         if (val == null)
-          elRef.value.style.removeProperty(raw_prop);
+          el.style.removeProperty(raw_prop);
         else
-          elRef.value.style.setProperty(raw_prop, val);
+          el.style.setProperty(raw_prop, val);
       }
-    }
+    },
+    { immediate: true }
   );
   return variable;
 }
@@ -3854,10 +3941,10 @@ function useDeviceMotion(options = {}) {
   } = options;
   const isSupported = useSupported(() => typeof DeviceMotionEvent !== "undefined");
   const requirePermissions = useSupported(() => isSupported.value && "requestPermission" in DeviceMotionEvent && typeof DeviceMotionEvent.requestPermission === "function");
-  const permissionGranted = ref(false);
+  const permissionGranted = shallowRef(false);
   const acceleration = ref({ x: null, y: null, z: null });
   const rotationRate = ref({ alpha: null, beta: null, gamma: null });
-  const interval = ref(0);
+  const interval = shallowRef(0);
   const accelerationIncludingGravity = ref({
     x: null,
     y: null,
@@ -3929,10 +4016,10 @@ function useDeviceMotion(options = {}) {
 function useDeviceOrientation(options = {}) {
   const { window: window2 = defaultWindow } = options;
   const isSupported = useSupported(() => window2 && "DeviceOrientationEvent" in window2);
-  const isAbsolute = ref(false);
-  const alpha = ref(null);
-  const beta = ref(null);
-  const gamma = ref(null);
+  const isAbsolute = shallowRef(false);
+  const alpha = shallowRef(null);
+  const beta = shallowRef(null);
+  const gamma = shallowRef(null);
   if (window2 && isSupported.value) {
     useEventListener(window2, "deviceorientation", (event) => {
       isAbsolute.value = event.absolute;
@@ -3953,21 +4040,16 @@ function useDevicePixelRatio(options = {}) {
   const {
     window: window2 = defaultWindow
   } = options;
-  const pixelRatio = ref(1);
+  const pixelRatio = shallowRef(1);
+  const query = useMediaQuery(() => `(resolution: ${pixelRatio.value}dppx)`, options);
+  let stop = noop;
   if (window2) {
-    let observe2 = function() {
-      pixelRatio.value = window2.devicePixelRatio;
-      cleanup2();
-      media = window2.matchMedia(`(resolution: ${pixelRatio.value}dppx)`);
-      media.addEventListener("change", observe2, { once: true });
-    }, cleanup2 = function() {
-      media == null ? void 0 : media.removeEventListener("change", observe2);
-    };
-    let media;
-    observe2();
-    tryOnScopeDispose(cleanup2);
+    stop = watchImmediate(query, () => pixelRatio.value = window2.devicePixelRatio);
   }
-  return { pixelRatio };
+  return {
+    pixelRatio: readonly(pixelRatio),
+    stop
+  };
 }
 function useDevicesList(options = {}) {
   const {
@@ -3981,7 +4063,7 @@ function useDevicesList(options = {}) {
   const audioInputs = computed(() => devices.value.filter((i) => i.kind === "audioinput"));
   const audioOutputs = computed(() => devices.value.filter((i) => i.kind === "audiooutput"));
   const isSupported = useSupported(() => navigator2 && navigator2.mediaDevices && navigator2.mediaDevices.enumerateDevices);
-  const permissionGranted = ref(false);
+  const permissionGranted = shallowRef(false);
   let stream;
   async function update() {
     if (!isSupported.value)
@@ -4033,7 +4115,7 @@ function useDevicesList(options = {}) {
 }
 function useDisplayMedia(options = {}) {
   var _a;
-  const enabled = ref((_a = options.enabled) != null ? _a : false);
+  const enabled = shallowRef((_a = options.enabled) != null ? _a : false);
   const video = options.video;
   const audio = options.audio;
   const { navigator: navigator2 = defaultNavigator } = options;
@@ -4048,7 +4130,7 @@ function useDisplayMedia(options = {}) {
     if (!isSupported.value || stream.value)
       return;
     stream.value = await navigator2.mediaDevices.getDisplayMedia(constraint);
-    (_a2 = stream.value) == null ? void 0 : _a2.getTracks().forEach((t) => t.addEventListener("ended", stop));
+    (_a2 = stream.value) == null ? void 0 : _a2.getTracks().forEach((t) => useEventListener(t, "ended", stop, { passive: true }));
     return stream.value;
   }
   async function _stop() {
@@ -4087,7 +4169,7 @@ function useDisplayMedia(options = {}) {
 function useDocumentVisibility(options = {}) {
   const { document: document2 = defaultDocument } = options;
   if (!document2)
-    return ref("visible");
+    return shallowRef("visible");
   const visibility = ref(document2.visibilityState);
   useEventListener(document2, "visibilitychange", () => {
     visibility.value = document2.visibilityState;
@@ -4203,7 +4285,7 @@ function useDraggable(target, options = {}) {
 }
 function useDropZone(target, options = {}) {
   var _a, _b;
-  const isOverDropZone = ref(false);
+  const isOverDropZone = shallowRef(false);
   const files = shallowRef(null);
   let counter = 0;
   let isValid = true;
@@ -4334,14 +4416,14 @@ function useElementBounding(target, options = {}) {
     immediate = true,
     updateTiming = "sync"
   } = options;
-  const height = ref(0);
-  const bottom = ref(0);
-  const left = ref(0);
-  const right = ref(0);
-  const top = ref(0);
-  const width = ref(0);
-  const x = ref(0);
-  const y = ref(0);
+  const height = shallowRef(0);
+  const bottom = shallowRef(0);
+  const left = shallowRef(0);
+  const right = shallowRef(0);
+  const top = shallowRef(0);
+  const width = shallowRef(0);
+  const x = shallowRef(0);
+  const y = shallowRef(0);
   function recalculate() {
     const el = unrefElement(target);
     if (!el) {
@@ -4431,7 +4513,7 @@ function useElementHover(el, options = {}) {
     triggerOnRemoval = false,
     window: window2 = defaultWindow
   } = options;
-  const isHovered = ref(false);
+  const isHovered = shallowRef(false);
   let timer;
   const toggle = (entering) => {
     const delay = entering ? delayEnter : delayLeave;
@@ -4575,10 +4657,11 @@ function useElementVisibility(element, options = {}) {
     window: window2 = defaultWindow,
     scrollTarget,
     threshold = 0,
-    rootMargin
+    rootMargin,
+    once = false
   } = options;
-  const elementIsVisible = ref(false);
-  useIntersectionObserver(
+  const elementIsVisible = shallowRef(false);
+  const { stop } = useIntersectionObserver(
     element,
     (intersectionObserverEntries) => {
       let isIntersecting = elementIsVisible.value;
@@ -4590,6 +4673,11 @@ function useElementVisibility(element, options = {}) {
         }
       }
       elementIsVisible.value = isIntersecting;
+      if (once) {
+        watchOnce(elementIsVisible, () => {
+          stop();
+        });
+      }
     },
     {
       root: scrollTarget,
@@ -4644,7 +4732,7 @@ function resolveNestedOptions$1(options) {
 function useEventSource(url, events2 = [], options = {}) {
   const event = ref(null);
   const data = ref(null);
-  const status = ref("CONNECTING");
+  const status = shallowRef("CONNECTING");
   const eventSource = ref(null);
   const error = shallowRef(null);
   const urlRef = toRef2(url);
@@ -4703,7 +4791,7 @@ function useEventSource(url, events2 = [], options = {}) {
       useEventListener(es, event_name, (e) => {
         event.value = event_name;
         data.value = e.data || null;
-      });
+      }, { passive: true });
     }
   };
   const open = () => {
@@ -4733,7 +4821,7 @@ function useEventSource(url, events2 = [], options = {}) {
 function useEyeDropper(options = {}) {
   const { initialValue = "" } = options;
   const isSupported = useSupported(() => typeof window !== "undefined" && "EyeDropper" in window);
-  const sRGBHex = ref(initialValue);
+  const sRGBHex = shallowRef(initialValue);
   async function open(openOptions) {
     if (!isSupported.value)
       return;
@@ -4794,7 +4882,13 @@ function headersToObject(headers) {
 function combineCallbacks(combination, ...callbacks) {
   if (combination === "overwrite") {
     return async (ctx) => {
-      const callback = callbacks[callbacks.length - 1];
+      let callback;
+      for (let i = callbacks.length - 1; i >= 0; i--) {
+        if (callbacks[i] != null) {
+          callback = callbacks[i];
+          break;
+        }
+      }
       if (callback)
         return { ...ctx, ...await callback(ctx) };
       return ctx;
@@ -4887,9 +4981,9 @@ function useFetch(url, ...args) {
   const responseEvent = createEventHook();
   const errorEvent = createEventHook();
   const finallyEvent = createEventHook();
-  const isFinished = ref(false);
-  const isFetching = ref(false);
-  const aborted = ref(false);
+  const isFinished = shallowRef(false);
+  const isFetching = shallowRef(false);
+  const aborted = shallowRef(false);
   const statusCode = ref(null);
   const response = shallowRef(null);
   const error = shallowRef(null);
@@ -4979,7 +5073,9 @@ function useFetch(url, ...args) {
       if (options.afterFetch) {
         ({ data: responseData } = await options.afterFetch({
           data: responseData,
-          response: fetchResponse
+          response: fetchResponse,
+          context,
+          execute
         }));
       }
       data.value = responseData;
@@ -4991,7 +5087,9 @@ function useFetch(url, ...args) {
         ({ error: errorData, data: responseData } = await options.onFetchError({
           data: responseData,
           error: fetchError,
-          response: response.value
+          response: response.value,
+          context,
+          execute
         }));
       }
       error.value = errorData;
@@ -5116,11 +5214,22 @@ var DEFAULT_OPTIONS = {
   reset: false,
   directory: false
 };
+function prepareInitialFiles(files) {
+  if (!files)
+    return null;
+  if (files instanceof FileList)
+    return files;
+  const dt = new DataTransfer();
+  for (const file of files) {
+    dt.items.add(file);
+  }
+  return dt.files;
+}
 function useFileDialog(options = {}) {
   const {
     document: document2 = defaultDocument
   } = options;
-  const files = ref(null);
+  const files = ref(prepareInitialFiles(options.initialFiles));
   const { on: onChange, trigger: changeTrigger } = createEventHook();
   const { on: onCancel, trigger: cancelTrigger } = createEventHook();
   let input;
@@ -5175,9 +5284,9 @@ function useFileSystemAccess(options = {}) {
   } = options;
   const window2 = _window;
   const isSupported = useSupported(() => window2 && "showSaveFilePicker" in window2 && "showOpenFilePicker" in window2);
-  const fileHandle = ref();
-  const data = ref();
-  const file = ref();
+  const fileHandle = shallowRef();
+  const data = shallowRef();
+  const file = shallowRef();
   const fileName = computed(() => {
     var _a, _b;
     return (_b = (_a = file.value) == null ? void 0 : _a.name) != null ? _b : "";
@@ -5264,7 +5373,7 @@ function useFileSystemAccess(options = {}) {
 }
 function useFocus(target, options = {}) {
   const { initialValue = false, focusVisible = false, preventScroll = false } = options;
-  const innerFocused = ref(false);
+  const innerFocused = shallowRef(false);
   const targetElement = computed(() => unrefElement(target));
   const listenerOptions = { passive: true };
   useEventListener(targetElement, "focus", (event) => {
@@ -5298,7 +5407,7 @@ var PSEUDO_CLASS_FOCUS_WITHIN = ":focus-within";
 function useFocusWithin(target, options = {}) {
   const { window: window2 = defaultWindow } = options;
   const targetElement = computed(() => unrefElement(target));
-  const _focused = ref(false);
+  const _focused = shallowRef(false);
   const focused = computed(() => _focused.value);
   const activeElement = useActiveElement(options);
   if (!window2 || !activeElement.value) {
@@ -5314,7 +5423,7 @@ function useFocusWithin(target, options = {}) {
 }
 function useFps(options) {
   var _a;
-  const fps = ref(0);
+  const fps = shallowRef(0);
   if (typeof performance === "undefined")
     return fps;
   const every = (_a = options == null ? void 0 : options.every) != null ? _a : 10;
@@ -5346,9 +5455,9 @@ function useFullscreen(target, options = {}) {
   } = options;
   const targetRef = computed(() => {
     var _a;
-    return (_a = unrefElement(target)) != null ? _a : document2 == null ? void 0 : document2.querySelector("html");
+    return (_a = unrefElement(target)) != null ? _a : document2 == null ? void 0 : document2.documentElement;
   });
-  const isFullscreen = ref(false);
+  const isFullscreen = shallowRef(false);
   const requestMethod = computed(() => {
     return [
       "requestFullscreen",
@@ -5627,8 +5736,8 @@ function useIdle(timeout = oneMinute, options = {}) {
     window: window2 = defaultWindow,
     eventFilter = throttleFilter(50)
   } = options;
-  const idle = ref(initialState);
-  const lastActive = ref(timestamp());
+  const idle = shallowRef(initialState);
+  const lastActive = shallowRef(timestamp());
   let timer;
   const reset = () => {
     idle.value = false;
@@ -5740,8 +5849,8 @@ function useScroll(element, options = {}) {
       console.error(e);
     }
   } = options;
-  const internalX = ref(0);
-  const internalY = ref(0);
+  const internalX = shallowRef(0);
+  const internalY = shallowRef(0);
   const x = computed({
     get() {
       return internalX.value;
@@ -5776,7 +5885,7 @@ function useScroll(element, options = {}) {
     if (y != null)
       internalY.value = scrollContainer.scrollTop;
   }
-  const isScrolling = ref(false);
+  const isScrolling = shallowRef(false);
   const arrivedState = reactive({
     left: true,
     right: false,
@@ -5948,7 +6057,7 @@ function useKeyModifier(modifier, options = {}) {
       useEventListener(document2, listenerEvent, (evt) => {
         if (typeof evt.getModifierState === "function")
           state.value = evt.getModifierState(modifier);
-      });
+      }, { passive: true });
     });
   }
   return state;
@@ -6045,9 +6154,9 @@ function useMagicKeys(options = {}) {
         if (!(prop in refs)) {
           if (/[+_-]/.test(prop)) {
             const keys2 = prop.split(/[+_-]/g).map((i) => i.trim());
-            refs[prop] = computed(() => keys2.every((key) => toValue(proxy[key])));
+            refs[prop] = computed(() => keys2.map((key) => toValue(proxy[key])).every(Boolean));
           } else {
-            refs[prop] = ref(false);
+            refs[prop] = shallowRef(false);
           }
         }
         const r = Reflect.get(target2, prop, rec);
@@ -6083,20 +6192,21 @@ function useMediaControls(target, options = {}) {
   const {
     document: document2 = defaultDocument
   } = options;
-  const currentTime = ref(0);
-  const duration = ref(0);
-  const seeking = ref(false);
-  const volume = ref(1);
-  const waiting = ref(false);
-  const ended = ref(false);
-  const playing = ref(false);
-  const rate = ref(1);
-  const stalled = ref(false);
+  const listenerOptions = { passive: true };
+  const currentTime = shallowRef(0);
+  const duration = shallowRef(0);
+  const seeking = shallowRef(false);
+  const volume = shallowRef(1);
+  const waiting = shallowRef(false);
+  const ended = shallowRef(false);
+  const playing = shallowRef(false);
+  const rate = shallowRef(1);
+  const stalled = shallowRef(false);
   const buffered = ref([]);
   const tracks = ref([]);
-  const selectedTrack = ref(-1);
-  const isPictureInPicture = ref(false);
-  const muted = ref(false);
+  const selectedTrack = shallowRef(-1);
+  const isPictureInPicture = shallowRef(false);
+  const muted = shallowRef(false);
   const supportsPictureInPicture = document2 && "pictureInPictureEnabled" in document2;
   const sourceErrorEvent = createEventHook();
   const playbackErrorEvent = createEventHook();
@@ -6151,7 +6261,6 @@ function useMediaControls(target, options = {}) {
     else if (isObject(src))
       sources = [src];
     el.querySelectorAll("source").forEach((e) => {
-      e.removeEventListener("error", sourceErrorEvent.trigger);
       e.remove();
     });
     sources.forEach(({ src: src2, type, media }) => {
@@ -6159,16 +6268,10 @@ function useMediaControls(target, options = {}) {
       source.setAttribute("src", src2);
       source.setAttribute("type", type || "");
       source.setAttribute("media", media || "");
-      source.addEventListener("error", sourceErrorEvent.trigger);
+      useEventListener(source, "error", sourceErrorEvent.trigger, listenerOptions);
       el.appendChild(source);
     });
     el.load();
-  });
-  tryOnScopeDispose(() => {
-    const el = toValue(target);
-    if (!el)
-      return;
-    el.querySelectorAll("source").forEach((e) => e.removeEventListener("error", sourceErrorEvent.trigger));
   });
   watch([target, volume], () => {
     const el = toValue(target);
@@ -6227,7 +6330,6 @@ function useMediaControls(target, options = {}) {
       el.pause();
     }
   });
-  const listenerOptions = { passive: true };
   useEventListener(
     target,
     "timeupdate",
@@ -6422,7 +6524,7 @@ var UseMouseBuiltinExtractors = {
   page: (event) => [event.pageX, event.pageY],
   client: (event) => [event.clientX, event.clientY],
   screen: (event) => [event.screenX, event.screenY],
-  movement: (event) => event instanceof Touch ? null : [event.movementX, event.movementY]
+  movement: (event) => event instanceof MouseEvent ? [event.movementX, event.movementY] : null
 };
 function useMouse(options = {}) {
   const {
@@ -6438,9 +6540,9 @@ function useMouse(options = {}) {
   let _prevMouseEvent = null;
   let _prevScrollX = 0;
   let _prevScrollY = 0;
-  const x = ref(initialValue.x);
-  const y = ref(initialValue.y);
-  const sourceType = ref(null);
+  const x = shallowRef(initialValue.x);
+  const y = shallowRef(initialValue.y);
+  const sourceType = shallowRef(null);
   const extractor = typeof type === "function" ? type : UseMouseBuiltinExtractors[type];
   const mouseHandler = (event) => {
     const result = extractor(event);
@@ -6504,13 +6606,13 @@ function useMouseInElement(target, options = {}) {
   const type = options.type || "page";
   const { x, y, sourceType } = useMouse(options);
   const targetRef = ref(target != null ? target : window2 == null ? void 0 : window2.document.body);
-  const elementX = ref(0);
-  const elementY = ref(0);
-  const elementPositionX = ref(0);
-  const elementPositionY = ref(0);
-  const elementHeight = ref(0);
-  const elementWidth = ref(0);
-  const isOutside = ref(true);
+  const elementX = shallowRef(0);
+  const elementY = shallowRef(0);
+  const elementPositionX = shallowRef(0);
+  const elementPositionY = shallowRef(0);
+  const elementHeight = shallowRef(0);
+  const elementWidth = shallowRef(0);
+  const isOutside = shallowRef(true);
   let stop = () => {
   };
   if (window2) {
@@ -6627,8 +6729,8 @@ function useNetwork(options = {}) {
   const { window: window2 = defaultWindow } = options;
   const navigator2 = window2 == null ? void 0 : window2.navigator;
   const isSupported = useSupported(() => navigator2 && "connection" in navigator2);
-  const isOnline = ref(true);
-  const saveData = ref(false);
+  const isOnline = shallowRef(true);
+  const saveData = shallowRef(false);
   const offlineAt = ref(void 0);
   const onlineAt = ref(void 0);
   const downlink = ref(void 0);
@@ -6787,7 +6889,7 @@ function useOnline(options = {}) {
 }
 function usePageLeave(options = {}) {
   const { window: window2 = defaultWindow } = options;
-  const isLeft = ref(false);
+  const isLeft = shallowRef(false);
   const handler = (event) => {
     if (!window2)
       return;
@@ -6963,7 +7065,7 @@ function usePointer(options = {}) {
   const {
     target = defaultWindow
   } = options;
-  const isInside = ref(false);
+  const isInside = shallowRef(false);
   const state = ref(options.initialValue || {});
   Object.assign(state.value, defaultState, state.value);
   const handler = (event) => {
@@ -7057,8 +7159,8 @@ function usePointerSwipe(target, options = {}) {
   const distanceY = computed(() => posStart.y - posEnd.y);
   const { max, abs } = Math;
   const isThresholdExceeded = computed(() => max(abs(distanceX.value), abs(distanceY.value)) >= threshold);
-  const isSwiping = ref(false);
-  const isPointerDown = ref(false);
+  const isSwiping = shallowRef(false);
+  const isPointerDown = shallowRef(false);
   const direction = computed(() => {
     if (!isThresholdExceeded.value)
       return "none";
@@ -7196,10 +7298,10 @@ var rightVarName = "--vueuse-safe-area-right";
 var bottomVarName = "--vueuse-safe-area-bottom";
 var leftVarName = "--vueuse-safe-area-left";
 function useScreenSafeArea() {
-  const top = ref("");
-  const right = ref("");
-  const bottom = ref("");
-  const left = ref("");
+  const top = shallowRef("");
+  const right = shallowRef("");
+  const bottom = shallowRef("");
+  const left = shallowRef("");
   if (isClient) {
     const topCssVar = useCssVar(topVarName);
     const rightCssVar = useCssVar(rightVarName);
@@ -7274,13 +7376,16 @@ function useScriptTag(src, onLoaded = noop, options = {}) {
     } else if (el.hasAttribute("data-loaded")) {
       resolveWithElement(el);
     }
-    el.addEventListener("error", (event) => reject(event));
-    el.addEventListener("abort", (event) => reject(event));
-    el.addEventListener("load", () => {
+    const listenerOptions = {
+      passive: true
+    };
+    useEventListener(el, "error", (event) => reject(event), listenerOptions);
+    useEventListener(el, "abort", (event) => reject(event), listenerOptions);
+    useEventListener(el, "load", () => {
       el.setAttribute("data-loaded", "true");
       onLoaded(el);
       resolveWithElement(el);
-    });
+    }, listenerOptions);
     if (shouldAppend)
       el = document2.head.appendChild(el);
     if (!waitForScriptLoad)
@@ -7456,18 +7561,16 @@ function useSpeechRecognition(options = {}) {
     window: window2 = defaultWindow
   } = options;
   const lang = toRef2(options.lang || "en-US");
-  const isListening = ref(false);
-  const isFinal = ref(false);
-  const result = ref("");
+  const isListening = shallowRef(false);
+  const isFinal = shallowRef(false);
+  const result = shallowRef("");
   const error = shallowRef(void 0);
   let recognition;
   const start = () => {
-    if (!isListening.value)
-      recognition == null ? void 0 : recognition.start();
+    isListening.value = true;
   };
   const stop = () => {
-    if (isListening.value)
-      recognition == null ? void 0 : recognition.stop();
+    isListening.value = false;
   };
   const toggle = (value = !isListening.value) => {
     if (value) {
@@ -7506,8 +7609,10 @@ function useSpeechRecognition(options = {}) {
       isListening.value = false;
       recognition.lang = toValue(lang);
     };
-    watch(isListening, () => {
-      if (isListening.value)
+    watch(isListening, (newValue, oldValue) => {
+      if (newValue === oldValue)
+        return;
+      if (newValue)
         recognition.start();
       else
         recognition.stop();
@@ -7537,7 +7642,7 @@ function useSpeechSynthesis(text, options = {}) {
   } = options;
   const synth = window2 && window2.speechSynthesis;
   const isSupported = useSupported(() => synth);
-  const isPlaying = ref(false);
+  const isPlaying = shallowRef(false);
   const status = ref("init");
   const spokenText = toRef2(text || "");
   const lang = toRef2(options.lang || "en-US");
@@ -7772,14 +7877,14 @@ function useStorageAsync(key, initialValue, storage, options = {}) {
 }
 var _id = 0;
 function useStyleTag(css, options = {}) {
-  const isLoaded = ref(false);
+  const isLoaded = shallowRef(false);
   const {
     document: document2 = defaultDocument,
     immediate = true,
     manual = false,
     id = `vueuse_styletag_${++_id}`
   } = options;
-  const cssRef = ref(css);
+  const cssRef = shallowRef(css);
   let stop = () => {
   };
   const load = () => {
@@ -7836,7 +7941,7 @@ function useSwipe(target, options = {}) {
   const diffY = computed(() => coordsStart.y - coordsEnd.y);
   const { max, abs } = Math;
   const isThresholdExceeded = computed(() => max(abs(diffX.value), abs(diffY.value)) >= threshold);
-  const isSwiping = ref(false);
+  const isSwiping = shallowRef(false);
   const direction = computed(() => {
     if (!isThresholdExceeded.value)
       return "none";
@@ -7974,13 +8079,21 @@ function useTextSelection(options = {}) {
     selection
   };
 }
-function useTextareaAutosize(options) {
+function tryRequestAnimationFrame(window2 = defaultWindow, fn) {
+  if (window2 && typeof window2.requestAnimationFrame === "function") {
+    window2.requestAnimationFrame(fn);
+  } else {
+    fn();
+  }
+}
+function useTextareaAutosize(options = {}) {
   var _a, _b;
+  const { window: window2 = defaultWindow } = options;
   const textarea = toRef2(options == null ? void 0 : options.element);
   const input = toRef2((_a = options == null ? void 0 : options.input) != null ? _a : "");
   const styleProp = (_b = options == null ? void 0 : options.styleProp) != null ? _b : "height";
-  const textareaScrollHeight = ref(1);
-  const textareaOldWidth = ref(0);
+  const textareaScrollHeight = shallowRef(1);
+  const textareaOldWidth = shallowRef(0);
   function triggerResize() {
     var _a2;
     if (!textarea.value)
@@ -8003,8 +8116,10 @@ function useTextareaAutosize(options) {
   useResizeObserver(textarea, ([{ contentRect }]) => {
     if (textareaOldWidth.value === contentRect.width)
       return;
-    textareaOldWidth.value = contentRect.width;
-    triggerResize();
+    tryRequestAnimationFrame(window2, () => {
+      textareaOldWidth.value = contentRect.width;
+      triggerResize();
+    });
   });
   if (options == null ? void 0 : options.watch)
     watch(options.watch, triggerResize, { immediate: true, deep: true });
@@ -8111,10 +8226,11 @@ function formatTimeAgo(from, options = {}, now2 = Date.now()) {
 }
 function useTimeoutPoll(fn, interval, options = {}) {
   const {
-    immediate = true
+    immediate = true,
+    immediateCallback = false
   } = options;
-  const { start } = useTimeoutFn(loop, interval, { immediate: false });
-  const isActive = ref(false);
+  const { start } = useTimeoutFn(loop, interval, { immediate });
+  const isActive = shallowRef(false);
   async function loop() {
     if (!isActive.value)
       return;
@@ -8124,7 +8240,9 @@ function useTimeoutPoll(fn, interval, options = {}) {
   function resume() {
     if (!isActive.value) {
       isActive.value = true;
-      loop();
+      if (immediateCallback)
+        fn();
+      start();
     }
   }
   function pause() {
@@ -8147,7 +8265,7 @@ function useTimestamp(options = {}) {
     interval = "requestAnimationFrame",
     callback
   } = options;
-  const ts = ref(timestamp() + offset);
+  const ts = shallowRef(timestamp() + offset);
   const update = () => ts.value = timestamp() + offset;
   const cb = callback ? () => {
     update();
@@ -8171,7 +8289,7 @@ function useTitle(newTitle = null, options = {}) {
   } = options;
   const originalTitle = (_a = document2 == null ? void 0 : document2.title) != null ? _a : "";
   const title = toRef2((_b = newTitle != null ? newTitle : document2 == null ? void 0 : document2.title) != null ? _b : null);
-  const isReadonly2 = newTitle && typeof newTitle === "function";
+  const isReadonly2 = !!(newTitle && typeof newTitle === "function");
   function format(t) {
     if (!("titleTemplate" in options))
       return t;
@@ -8180,9 +8298,9 @@ function useTitle(newTitle = null, options = {}) {
   }
   watch(
     title,
-    (t, o) => {
-      if (t !== o && document2)
-        document2.title = format(typeof t === "string" ? t : "");
+    (newValue, oldValue) => {
+      if (newValue !== oldValue && document2)
+        document2.title = format(newValue != null ? newValue : "");
     },
     { immediate: true }
   );
@@ -8196,7 +8314,7 @@ function useTitle(newTitle = null, options = {}) {
       { childList: true }
     );
   }
-  tryOnBeforeUnmount(() => {
+  tryOnScopeDispose(() => {
     if (restoreOnUnmount) {
       const restoredTitle = restoreOnUnmount(originalTitle, title.value || "");
       if (restoredTitle != null && document2)
@@ -8644,7 +8762,7 @@ function useVirtualList(list, options) {
   };
 }
 function useVirtualListResources(list) {
-  const containerRef = ref(null);
+  const containerRef = shallowRef(null);
   const size = useElementSize(containerRef);
   const currentList = ref([]);
   const source = shallowRef(list);
@@ -9247,7 +9365,7 @@ function useWebWorkerFn(fn, options = {}) {
 function useWindowFocus(options = {}) {
   const { window: window2 = defaultWindow } = options;
   if (!window2)
-    return ref(false);
+    return shallowRef(false);
   const focused = ref(window2.document.hasFocus());
   const listenerOptions = { passive: true };
   useEventListener(window2, "blur", () => {
@@ -9476,6 +9594,7 @@ export {
   useStorage,
   useColorMode,
   useConfirmDialog,
+  useCountdown,
   useCssVar,
   useCurrentElement,
   useCycleList,
@@ -9587,4 +9706,4 @@ export {
   useWindowScroll,
   useWindowSize
 };
-//# sourceMappingURL=chunk-HKE2AU6Z.js.map
+//# sourceMappingURL=chunk-SQTWNBIR.js.map

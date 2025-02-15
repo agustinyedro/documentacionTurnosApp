@@ -3,9 +3,6 @@
 </template>
 
 <script>
-import SwaggerUI from "swagger-ui-dist";
-import "swagger-ui-dist/swagger-ui.css";
-
 export default {
   name: "UiSwagger",
   props: {
@@ -16,33 +13,29 @@ export default {
   },
   async mounted() {
     try {
+      const { default: SwaggerUI } = await import(
+        "swagger-ui-dist/swagger-ui-es-bundle.js"
+      );
+      await import("swagger-ui-dist/swagger-ui.css");
+
       let spec;
-
-      // Obtiene la base URL de VitePress (si está configurada)
       const baseUrl = import.meta.env.BASE_URL || "/";
+      const fullUrl = this.specUrl.startsWith("http")
+        ? this.specUrl
+        : `${baseUrl}${this.specUrl}`;
 
-      // Construye la URL completa del archivo JSON
-      const fullUrl =
-        this.specUrl.startsWith("http://") ||
-        this.specUrl.startsWith("https://")
-          ? this.specUrl // Si es una URL externa, usa la URL directamente
-          : `${baseUrl}${this.specUrl}`; // Si es un archivo local, agrega la base URL
-
-      // Carga el archivo JSON
       const response = await fetch(fullUrl);
       if (!response.ok) {
         throw new Error(`Error al cargar el archivo JSON: ${response.status}`);
       }
       spec = await response.json();
 
-      // Renderiza Swagger UI en el contenedor
       SwaggerUI({
         domNode: this.$refs.swaggerContainer,
-        spec: spec, // Usa el JSON cargado
-        presets: [SwaggerUI.presets.apis],
+        spec: spec,
       });
     } catch (error) {
-      console.error("Error al cargar Swagger:", error);
+      console.error("Error al cargar Swagger:", error.message || error);
     }
   },
 };
@@ -58,5 +51,14 @@ export default {
   border: 1px solid var(--vp-c-text-3); /* Borde suave */
   border-radius: 8px; /* Bordes redondeados */
   background-color: var(--vp-c-bg-alt); /* Fondo alternativo */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para destacar */
+}
+
+/* Mejora para dispositivos móviles */
+@media (max-width: 768px) {
+  .swagger-container {
+    height: auto; /* Altura automática en móviles */
+    padding: 10px; /* Reducir padding */
+  }
 }
 </style>
